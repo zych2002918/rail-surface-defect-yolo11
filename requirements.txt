@@ -1,8 +1,40 @@
-# 依赖：推理/训练均使用仓库内 ultralytics/ 代码，无需额外安装 ultralytics 包
-# 但需要基础依赖：
+# rail-surface-defect-yolo11 依赖安装（改进版 ultralytics 8.3.9 自包含于本仓库）
+# 已通过 scripts/selfcheck.py 全链路验证（CPU 推理）。
+# 推荐环境（论文实验）：python 3.10, torch 2.2.2+cu121；GPU 训练需 CUDA 版 torch。
+
+# ---- 基础依赖 ----
 numpy>=1.24
 opencv-python>=4.6
+pyyaml>=6.0
+pandas>=1.5
+matplotlib>=3.5
+pillow>=9.0
+tqdm>=4.64
+psutil>=5.9
+requests>=2.23
+seaborn>=0.11
+scipy>=1.9
+dill>=0.3.7
+
+# ---- 深度学习 ----
 torch>=2.0
 torchvision>=0.15
-# Windows py311 下 dlib 可用 dlib-bin；大多数场景不需要 dlib
-# pyyaml, pandas, matplotlib（ultralytics 内部依赖，按需安装）
+thop>=0.1.1
+timm>=1.0.7
+
+# ---- 改进模块附加依赖（extra_modules 用到） ----
+einops>=0.7
+efficientnet_pytorch>=0.7.1
+mmcv-lite>=2.0
+mmengine>=0.10
+pywavelets>=1.4
+
+# ---- Windows + Python 3.11 注意 ----
+# dlib 无官方 cp311 wheel，用预编译 dlib-bin；其余平台用 dlib
+# （仅部分绘图/工具脚本需要 dlib，核心训练推理不依赖）
+# dlib-bin>=19.22; sys_platform == "win32"
+# dlib>=19.22; sys_platform != "win32"
+
+# ---- CPU 快速安装示例（无 GPU） ----
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# pip install -r requirements.txt

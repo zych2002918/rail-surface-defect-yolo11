@@ -50,6 +50,13 @@ rail-surface-defect-yolo11/
 # 环境（Python 3.10/3.11 + GPU 推荐）
 pip install -r requirements.txt
 
+# 引擎自检（导入/权重加载/CPU 推理，~10s）
+python scripts/selfcheck.py
+# 期望输出:
+#   [OK] import ultralytics (8.3.9)
+#   [OK] 权重加载 LSDECD-FDPN-ODConv-best.pt
+#   [OK] 端到端推理 (CPU dummy 图)
+
 # 推理（用改进版权重）
 python detect.py --weights weights/LSDECD-FDPN-ODConv-best.pt --source <图片或视频>
 
