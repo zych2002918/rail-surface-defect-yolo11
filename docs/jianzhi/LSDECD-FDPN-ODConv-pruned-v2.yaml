@@ -1,0 +1,89 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# LSDECD-FDPN-ODConv 保精度剪枝 v2（修正版）
+#
+# ========== 参数反增问题根因分析 ==========
+# 原 pruned 版本（scales=[1.00,1.00,1024]）存在严重问题：
+#   Detect_LSDECD 的 hidc 会被 width 缩放（tasks.py 第1149行）：
+#     原始 s(width=0.50): hidc = make_divisible(256*0.50, 8) = 128
+#     原 pruned(width=1.00): hidc = make_divisible(224*1.00, 8) = 224
+#   share_conv(DEConv_GN) 参数量 ∝ hidc²，从 ~1.47M 暴增到 ~4.52M（+3M），
+#   导致整体参数量从原始 10.17M 反增至 11.28M。
+#
+# ========== 修正方案 ==========
+# 改回 scales: s:[0.50, 0.50, 1024]，让 width=0.50 自动处理所有通道缩放：
+#   - 仅修改 backbone P3/P4 通道（yaml值×0.5=实际值）：
+#       224×0.5=112（原128，-12.5%）
+#       448×0.5=224（原256，-12.5%）
+#   - P5/SPPF/C2PSA 保持 1024（×0.5=512，完整保留✓）
+#   - Head 完全保持原始 yaml 不变，FocusFeature/Detect_LSDECD 自动跟随缩减
+#   - Detect_LSDECD hidc 保持 yaml=256（×0.5=128），与原始完全一致✓
+#
+# ========== 实际通道对照 ==========
+#   层级               原始(s,×0.5)  本方案(×0.5)  变化
+#   P1 Conv0                32            32       不变
+#   P2 Conv1                64            64       不变
+#   P2 C3k2_ODConv2        128           112       -12.5%
+#   P3 Conv3               128           112       -12.5%
+#   P3 C3k2_ODConv4        256           224       -12.5%
+#   P4 Conv5               256           224       -12.5%
+#   P4 C3k2_ODConv6        256           224       -12.5%
+#   P5 Conv7               512           512       不变 ✓
+#   P5 C3k2_ODConv8        512           512       不变 ✓
+#   SPPF                   512           512       不变 ✓
+#   C2PSA                  512           512       完整保留 ✓
+#   FocusFeature L11 out   384           336       自动缩减
+#   FocusFeature L18 out   576           504       自动缩减
+#   Detect_LSDECD hidc     128           128       不变 ✓（关键！）
+#
+# ========== 预估指标 ==========
+#   参数量：~9.0-9.3M（原始10.17M，↓8-11%，低于原始）✓
+#   GFLOPs：~16-17（原始19.4，↓12-17%）
+#   权重迁移：P5/SPPF/C2PSA 层 100% 复用，精度损失预计 <2%
+
+# Parameters
+nc: 4  # 钢轨划痕检测类别数（clipping/lightband/perlage/seams）
+scales:
+  # [depth, width, max_channels]
+  s: [0.50, 0.50, 1024]  # 保持原始缩放策略，yaml通道值×0.5=实际通道数
+
+# Backbone（仅修改P3/P4通道，P5/SPPF/C2PSA完全不变）
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]]                    # 0-P1/2,  yaml64×0.5=32（不变）
+  - [-1, 1, Conv, [128, 3, 2]]                   # 1-P2/4,  yaml128×0.5=64（不变）
+  - [-1, 2, C3k2_ODConv, [224, False, 0.25]]     # 2,       yaml224×0.5=112（原128，-12.5%）
+  - [-1, 1, Conv, [224, 3, 2]]                   # 3-P3/8,  yaml224×0.5=112（-12.5%）
+  - [-1, 2, C3k2_ODConv, [448, False, 0.25]]     # 4,       yaml448×0.5=224（原256，-12.5%）
+  - [-1, 1, Conv, [448, 3, 2]]                   # 5-P4/16, yaml448×0.5=224（-12.5%）
+  - [-1, 2, C3k2_ODConv, [448, True]]            # 6,       yaml448×0.5=224（-12.5%）
+  - [-1, 1, Conv, [1024, 3, 2]]                  # 7-P5/32, yaml1024×0.5=512（不变）✓
+  - [-1, 2, C3k2_ODConv, [1024, True]]           # 8,       yaml1024×0.5=512（不变）✓
+  - [-1, 1, SPPF, [1024, 5]]                     # 9,       yaml1024×0.5=512（不变）✓
+  - [-1, 2, C2PSA, [1024]]                       # 10,      yaml1024×0.5=512，完整保留 ✓
+
+# Head（完全保持原始yaml不变，通道自动跟随backbone缩减）
+# FocusFeature([10,6,4]): inc=[512,224,224], hidc=int(224*0.5)=112, out=336（原384）
+# FocusFeature([14,11,17]): inc=[256,336,128], hidc=int(336*0.5)=168, out=504（原576）
+# Detect_LSDECD: ch=[128,504,256], hidc=256×0.5=128（与原始完全一致）✓
+head:
+  - [[10, 6, 4], 1, FocusFeature, []]            # 11, out=336
+
+  - [11, 1, Conv, [256, 3, 2]]                   # 12
+  - [[-1, 10], 1, Concat, [1]]
+  - [-1, 2, C3k2_ODConv, [512, True]]            # 14-P5/32
+
+  - [11, 1, nn.Upsample, [None, 2, 'nearest']]   # 15
+  - [[-1, 4], 1, Concat, [1]]
+  - [-1, 2, C3k2_ODConv, [256, False]]           # 17-P3/8
+
+  - [[14, 11, 17], 1, FocusFeature, []]          # 18, out=504
+
+  - [18, 1, Conv, [256, 3, 2]]                   # 19
+  - [[12, 19, 14], 1, Concat, [1]]
+  - [-1, 2, C3k2_ODConv, [512, True]]            # 21-P5/32
+
+  - [18, 1, nn.Upsample, [None, 2, 'nearest']]   # 22
+  - [[15, 22, 17], 1, Concat, [1]]
+  - [-1, 2, C3k2_ODConv, [256, False]]           # 24-P3/8
+
+  - [[24, 18, 21], 1, Detect_LSDECD, [nc, 256]] # Detect(P3,P4,P5), hidc=256×0.5=128 ✓
