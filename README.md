@@ -15,6 +15,14 @@
 - **结构化通道剪枝**：约束"精度损失 ≤ 2% (mAP50-95)、参数量削减 ≥ 20%"下压缩模型（两个剪枝版本）
 - 完整实验报告（模型对比 + 剪枝技术报告）与可视化图表见 `docs/jianzhi/`
 
+## 实验结果图
+
+| 训练收敛对比 | 性能柱状对比 | 综合能力雷达 |
+|---|---|---|
+| ![收敛曲线](docs/charts/1_convergence_curves.png) | ![性能对比](docs/charts/2_bar_comparison.png) | ![雷达图](docs/charts/4_radar_chart.png) |
+
+*完整图表集（效率气泡图/验证损失/海报等 7 张）见 [`docs/charts/`](docs/charts/)*
+
 ## 模型对比（验证集最佳 epoch，详见 docs/jianzhi/model_comparison_report.md）
 
 | 模型 | Params/M | GFLOPs/G | 说明 |
@@ -72,9 +80,9 @@ python train.py --data data.yaml --cfg ultralytics/cfg/models/gaijin11/LSDECD-FD
 
 ## 论文引用
 
-本仓库与已发表的钢轨缺陷检测改进论文配套。论文信息：
-
-> （论文题目/期刊/链接待补充——作品集仓库；研究详情见 docs/jianzhi/ 报告）
+本仓库与已发表的钢轨表面缺陷检测改进论文配套（LSDECD + FDPN + ODConv 方法与剪枝实验），
+研究细节（方法描述、实验设置、完整指标表）见 [`docs/jianzhi/`](docs/jianzhi/) 报告。
+如需引用，请联系仓库维护者获取论文信息。
 
 ## 许可
 
