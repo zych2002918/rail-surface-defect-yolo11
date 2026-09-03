@@ -13,7 +13,7 @@
 - **FDPN（Feature Dimension Pyramid Network）**：改进特征金字塔网络，增强多尺度特征融合
 - **ODConv（Omni-Dimensional Dynamic Convolution）**：全维度动态卷积
 - **结构化通道剪枝**：约束"精度损失 ≤ 2% (mAP50-95)、参数量削减 ≥ 20%"下压缩模型（两个剪枝版本）
-- 完整实验报告（模型对比 + 剪枝技术报告）与可视化图表见 `docs/jianzhi/`
+- 完整实验报告见 `docs/jianzhi/`，可视化图表见 [`docs/charts/`](docs/charts/)
 
 ## 实验结果图
 
@@ -42,11 +42,12 @@ rail-surface-defect-yolo11/
 │   ├── LSDECD-FDPN-ODConv-best.pt          # 改进版权重 (19.8MB)
 │   ├── LSDECD-FDPN-ODConv-pruned-v2-best.pt # 剪枝版权重 (18.3MB)
 │   └── yolo11s-baseline-best.pt            # 基线权重 (18.3MB)
-├── docs/jianzhi/
-│   ├── model_comparison_report.md          # 模型对比报告
-│   ├── pruning_technical_report.md         # 剪枝技术报告
-│   ├── *.yaml                              # 剪枝结构配置
-│   └── charts/                             # 收敛曲线/柱状/雷达图等
+├── docs/
+│   ├── jianzhi/
+│   │   ├── model_comparison_report.md          # 模型对比报告
+│   │   ├── pruning_technical_report.md         # 剪枝技术报告
+│   │   └── *.yaml                              # 剪枝结构配置
+│   └── charts/                                 # 收敛曲线/柱状/雷达图等
 ├── train.py / val.py / detect.py / export.py / my_export.py
 ├── data.yaml           # 数据集说明（图片数据不随仓库发布，见下）
 └── requirements.txt
