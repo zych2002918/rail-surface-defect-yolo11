@@ -87,7 +87,8 @@ python train.py --data data.yaml --cfg ultralytics/cfg/models/gaijin11/LSDECD-FD
 
 ## 许可
 
-- 本仓库自研改进代码（`ultralytics/nn/extra_modules/` 中 LSDECD/FDPN/ODConv 相关实现、`gaijin11` 配置、实验脚本）：**MIT License**（见 LICENSE）
+- 本仓库自研改进代码（`ultralytics/nn/extra_modules/` 中 LSDECD/FDPN/ODConv 相关实现、`gaijin11` 配置、实验脚本）：**MIT License**（见 [`LICENSE`](LICENSE)）
 - **Ultralytics 上游代码**（`ultralytics/` 其余部分）遵循上游 **AGPL-3.0**，衍生修改一并按 AGPL-3.0 分发（引用 ultralytics/ultralytics）
+- 许可范围细节见 [`LICENSE-ADDITIONAL.md`](LICENSE-ADDITIONAL.md)
 
 > 使用提醒：若用于发表论文/竞赛，请遵循 AGPL-3.0 与数据来源方（Roboflow/标注作者）的许可要求，并与原论文作者确认引用方式。
